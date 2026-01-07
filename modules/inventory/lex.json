@@ -1,0 +1,39 @@
+{
+    "$schema": "/v1/schema.json",
+    "version": "1.0.0",
+    "kind": "Module",
+    "metadata": {
+        "name": "inventory",
+        "namespace": "core"
+    },
+    "spec": {
+        "fields": [
+            {
+                "id": "sku",
+                "type": "string",
+                "required": true,
+                "constraints": {
+                    "regex": "^[A-Z0-9-]{8,12}$"
+                }
+            },
+            {
+                "id": "stock",
+                "type": "number",
+                "default": 0,
+                "constraints": {
+                    "min": 0
+                }
+            }
+        ],
+        "capabilities": {
+            "persistence": "table",
+            "features": ["search", "history"]
+        },
+        "hooks": [
+            {
+                "on": "beforeCreate",
+                "action": "validate_inventory_limits"
+            }
+        ]
+    }
+}
