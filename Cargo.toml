@@ -1,0 +1,23 @@
+[package]
+name = "lex-engine"
+version = "1.0.0"
+edition = "2021"
+authors = ["Brad <contact@itsbrad.dev>"]
+description = "Motor declarativo agnóstico inspirado en la arquitectura de sistemas de Minecraft."
+
+[dependencies]
+# El estándar para serialización/deserialización (JSON)
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Servidor web asíncrono y ultra-veloz
+tokio = { version = "1.0", features = ["full"] }
+axum = "0.8.8"
+
+# Conexión a base de datos (Asíncrona y Type-safe)
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "json", "uuid"] }
+
+# Utilidades
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] } # Para fechas
+regex = "1.10" # Para validar los constraints de los campos

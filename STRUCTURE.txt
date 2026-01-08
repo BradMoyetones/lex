@@ -1,0 +1,17 @@
+lex/
+├── src/
+│   ├── main.rs          # Punto de entrada (Servidor API)
+│   ├── core/            # El "Cerebro" del motor
+│   │   ├── mod.rs
+│   │   ├── engine.rs    # Lógica central de Lex
+│   │   ├── contract.rs  # Estructuras Rust que matchean el lex.json
+│   │   └── validator.rs # Validador de constraints y reglas
+│   ├── storage/         # Capa de persistencia (Postgres/JSONB)
+│   │   ├── mod.rs
+│   │   └── adapter.rs   # Traductor de Lex a SQL físico
+│   └── api/             # Endpoints (Axum/Actix)
+│       ├── mod.rs
+│       ├── describe.rs  # El famoso endpoint /describe
+│       └── resource.rs  # CRUD genérico para cualquier módulo
+├── Cargo.toml           # Dependencias
+└── .gitignore           

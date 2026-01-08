@@ -1,0 +1,23 @@
+# Rust
+target/
+Cargo.lock
+
+# IDEs
+.vscode/
+.idea/
+
+# Environment
+.env
+
+# Lex Internals
+/logs
+*.log
+
+# Node.js
+node_modules
+.DS_Store
+dist
+*.local
+.vite-inspect
+.remote-assets
+components.d.ts
