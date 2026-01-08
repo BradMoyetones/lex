@@ -49,6 +49,10 @@ En Lex, el código no dicta la lógica; el **Contrato** lo hace. El archivo `lex
 
 ## 2. El Ciclo de Vida del Dato
 
+<div style="background-color: #fff">
+  <img width="3864" height="8192" alt="image" src="https://github.com/user-attachments/assets/d7b030c7-f506-4af1-a905-14ddf219a3b4" />
+</div>
+
 El motor procesa la definición a través de cinco etapas críticas:
 
 1. **La Ley:** El usuario describe el inventario. Define que el `SKU` debe seguir un patrón y que el `stock` nunca puede ser negativo. No hay espacio para la ambigüedad.
