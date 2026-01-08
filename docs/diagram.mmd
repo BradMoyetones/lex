@@ -1,0 +1,55 @@
+---
+config:
+  layout: elk
+---
+flowchart TB
+ subgraph Arquitecto["1. Capa de Diseño (Entrada)"]
+        A["lex.json (The Law)"]
+        Note["Definición de Campos: SKU, Stock<br>Constraints: Min, Max, Regex<br>Hooks: beforeCreate"]
+  end
+ subgraph Engine["2. Capa de Procesamiento (El Motor)"]
+        B1["Validador de Contrato (Serde)"]
+        B["LEX ENGINE (Rust Core)"]
+        B2["Bootstrapping de Módulo"]
+        B3["Gestor de Hooks Declarativos"]
+  end
+ subgraph Persistencia["3. Capa de Datos (Estructura)"]
+        C[("Postgres / JSONB")]
+        C1["Tabla: core_inventory"]
+        C2["Índices & Constraints Físicos"]
+  end
+ subgraph Introspeccion["4. Capa de Introspección (El Espejo)"]
+        D["GET /describe/inventory"]
+        D1["JSON de Capacidades Único"]
+        D2["OpenAPI / Swagger Auto-gen"]
+  end
+ subgraph Ecosistema["5. Consumidores (Salida)"]
+        E["Lex UI Renderer (React/Bun)"]
+        F["Lex SDK Generator (TS/Python)"]
+        G["Event Bus (Webhooks/Log)"]
+        E1["Formularios Automáticos"]
+        F1["Librerías de Cliente Inmediatas"]
+  end
+    A --> B
+    B --> B1 & D
+    B1 --> B2
+    B2 --> B3
+    B3 --> C
+    C --> C1
+    C1 --> C2
+    D --> D1
+    D1 --> D2 & E & F & G
+    E --> E1
+    F --> F1
+    A -. Define el mundo .-> D
+    B1 -. Garantiza integridad .-> C
+    D1 -. Alimenta .-> E
+
+     A:::contract
+     B:::core
+     C:::storage
+     D:::output
+    classDef contract fill:#f9f,stroke:#333,stroke-width:2px
+    classDef core fill:#bbf,stroke:#333,stroke-width:2px
+    classDef storage fill:#dfd,stroke:#333,stroke-width:1px
+    classDef output fill:#fdb,stroke:#333,stroke-width:1px
