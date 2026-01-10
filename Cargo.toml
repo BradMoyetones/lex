@@ -21,3 +21,4 @@ sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "jso
 uuid = { version = "1.0", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] } # Para fechas
 regex = "1.10" # Para validar los constraints de los campos
+dotenvy = "0.15.7"

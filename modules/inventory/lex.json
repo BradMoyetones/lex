@@ -20,6 +20,7 @@
                 "id": "stock",
                 "type": "number",
                 "default": 0,
+                "required": false,
                 "constraints": {
                     "min": 0
                 }
