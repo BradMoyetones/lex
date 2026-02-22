@@ -1,41 +1,35 @@
 use axum::{extract::Path, Json, http::StatusCode, response::IntoResponse, Extension};
-use sqlx::PgPool;
 use serde_json::Value;
-use std::fs;
-use crate::core::contract::LexModule;
 use crate::core::engine::execute_create;
-use crate::storage::adapter::{ensure_table, insert_data, list_data};
+use std::sync::Arc;
+use crate::core::registry::Registry;
+use crate::storage::StorageAdapter;
 
 pub async fn create_item(
-    Extension(pool): Extension<PgPool>,
+    Extension(registry): Extension<Arc<Registry>>,
+    Extension(storage): Extension<Arc<dyn StorageAdapter>>, // Se desacopla de Postgres es decir se pueden construir otros adaptadores
     Path(module_name): Path<String>,
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
-    // 1. Cargar módulo
-    let path = format!("modules/{}/lex.json", module_name);
-    let config_data = fs::read_to_string(path).unwrap();
-    let module: LexModule = serde_json::from_str(&config_data).unwrap();
+    // 1. Buscar módulo en memoria
+    let module = match registry.modules.get(&module_name) {
+        Some(m) => m,
+        None => return (StatusCode::NOT_FOUND, "Módulo no encontrado").into_response(),
+    };
 
-    // 2. Asegurar infraestructura (Tabla)
-    if let Err(_) = ensure_table(&pool, &module).await {
-        return (StatusCode::INTERNAL_SERVER_ERROR, "Error de sincronización").into_response();
+    // 2. Asegurar que la tabla existe (vía el adaptador)
+    if let Err(e) = storage.ensure_repository(module).await {
+        return (StatusCode::INTERNAL_SERVER_ERROR, e).into_response();
     }
 
-    // 3. Validación y Hooks (Cerebro)
-    let response = execute_create(&module, &payload);
+    // 3. Ejecutar cerebro de Lex (Validación y Hooks)
+    let response = execute_create(module, &payload);
 
     if response.success {
-        // 4. PERSISTENCIA REAL
-        match insert_data(&pool, &module, &payload).await {
-            Ok(_) => {
-                let mut logs = response.action_logs;
-                logs.push("Dato persistido en disco con éxito".to_string());
-                (StatusCode::CREATED, Json(logs)).into_response()
-            },
-            Err(e) => {
-                println!("Error al insertar: {}", e);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Error al guardar datos").into_response()
-            }
+        // 4. Guardar usando el adaptador (No importa si es Postgres o Mongo)
+        match storage.insert(module, &payload).await {
+            Ok(_) => (StatusCode::CREATED, "Dato guardado con éxito").into_response(),
+            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e).into_response(),
         }
     } else {
         (StatusCode::BAD_REQUEST, Json(response.errors)).into_response()
@@ -43,19 +37,18 @@ pub async fn create_item(
 }
 
 pub async fn list_items(
-    Extension(pool): Extension<PgPool>,
+    Extension(registry): Extension<Arc<Registry>>,
+    Extension(storage): Extension<Arc<dyn StorageAdapter>>,
     Path(module_name): Path<String>,
 ) -> impl IntoResponse {
     // 1. Cargar módulo para validar que existe
-    let path = format!("modules/{}/lex.json", module_name);
-    let config_data = match fs::read_to_string(path) {
-        Ok(data) => data,
-        Err(_) => return (StatusCode::NOT_FOUND, "Módulo no encontrado").into_response(),
+    let module = match registry.modules.get(&module_name) {
+        Some(m) => m,
+        None => return (StatusCode::NOT_FOUND, "Módulo no encontrado").into_response(),
     };
-    let module: LexModule = serde_json::from_str(&config_data).unwrap();
 
     // 2. Llamar al adaptador para leer la tabla
-    match list_data(&pool, &module).await {
+    match storage.list(module).await {
         Ok(items) => (StatusCode::OK, Json(items)).into_response(),
         Err(e) => {
             println!("Error al leer: {}", e);
@@ -65,17 +58,17 @@ pub async fn list_items(
 }
 
 pub async fn update_item(
-    Extension(pool): Extension<PgPool>,
+    Extension(registry): Extension<Arc<Registry>>,
+    Extension(storage): Extension<Arc<dyn StorageAdapter>>,
     Path((module_name, id)): Path<(String, String)>, 
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
-    let path = format!("modules/{}/lex.json", module_name);
-    let config_data = fs::read_to_string(path).unwrap();
-    let module: LexModule = serde_json::from_str(&config_data).unwrap();
+    let module = match registry.modules.get(&module_name) {
+        Some(m) => m,
+        None => return (StatusCode::NOT_FOUND, "Módulo no encontrado").into_response(),
+    };
 
-    // Aquí Lex podría volver a pasar el motor de validación antes de actualizar
-    
-    match crate::storage::adapter::update_data(&pool, &module, id, &payload).await {
+    match storage.update(module, id, &payload).await {
         Ok(_) => (StatusCode::OK, "Registro actualizado correctamente").into_response(),
         Err(e) => {
             println!("Error al actualizar: {}", e);
@@ -85,15 +78,17 @@ pub async fn update_item(
 }
 
 pub async fn delete_item(
-    Extension(pool): Extension<PgPool>,
+    Extension(registry): Extension<Arc<Registry>>,
+    Extension(storage): Extension<Arc<dyn StorageAdapter>>,
     Path((module_name, id)): Path<(String, String)>,
 ) -> impl IntoResponse {
-    let path = format!("modules/{}/lex.json", module_name);
-    let config_data = fs::read_to_string(path).unwrap();
-    let module: LexModule = serde_json::from_str(&config_data).unwrap();
+    let module = match registry.modules.get(&module_name) {
+        Some(m) => m,
+        None => return (StatusCode::NOT_FOUND, "Módulo no encontrado").into_response(),
+    };
 
-    match crate::storage::adapter::delete_data(&pool, &module, id).await {
-        Ok(_) => (StatusCode::NO_CONTENT).into_response(), // 204 No Content es estándar para DELETE
+    match storage.delete(module, id).await {
+        Ok(_) => (StatusCode::NO_CONTENT).into_response(),
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Error al borrar").into_response(),
     }
 }

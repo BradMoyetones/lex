@@ -22,13 +22,13 @@ pub fn execute_create(module: &LexModule, data: &Value) -> EngineResponse {
         };
     }
 
-    logs.push("✅ Validación exitosa".to_string());
+    logs.push("Validación exitosa".to_string());
 
     // 2. Fase de Hooks (beforeCreate)
     run_hooks(module, "beforeCreate", data, &mut logs);
 
     // 3. Fase de Persistencia (Aquí iría SQLX en el futuro)
-    logs.push(format!("💾 Guardando en tabla: {}", module.metadata.name));
+    logs.push(format!("Guardando en tabla: {}", module.metadata.name));
 
     // 4. Fase de Hooks (afterCreate)
     run_hooks(module, "afterCreate", data, &mut logs);

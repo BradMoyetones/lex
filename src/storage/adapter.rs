@@ -1,11 +1,29 @@
 use sqlx::{PgPool, Executor, Row};
 use crate::core::LexModule;
 use crate::core::contract::FieldType;
+use crate::core::sanitizer::is_safe_identifier;
 
 pub async fn ensure_table(pool: &PgPool, module: &LexModule) -> Result<(), sqlx::Error> {
     let namespace = &module.metadata.namespace; // p.ej. "core"
     let table_name = &module.metadata.name;      // p.ej. "inventory"
     
+    // --- EL ESCUDO DE SEGURIDAD (Evitamos inyección SQL) ---
+    if !is_safe_identifier(namespace) || !is_safe_identifier(table_name) {
+        return Err(sqlx::Error::Configuration(
+            "Nombre de namespace o módulo inválido (caracteres no permitidos)".into()
+        ));
+    }
+
+    // Validar también cada nombre de columna (field.id)
+    for field in &module.spec.fields {
+        if !is_safe_identifier(&field.id) {
+            return Err(sqlx::Error::Configuration(
+                format!("Nombre de campo '{}' inválido", field.id).into()
+            ));
+        }
+    }
+    // ------------------------------------------------
+
     // 1. Crear el SCHEMA si no existe
     let schema_query = format!("CREATE SCHEMA IF NOT EXISTS {}", namespace);
     pool.execute(schema_query.as_str()).await?;
@@ -51,7 +69,7 @@ pub async fn insert_data(
     let mut values_placeholders = Vec::new();
     
     // Filtramos los campos que vienen en el JSON y existen en el contrato
-    for (idx, field) in module.spec.fields.iter().enumerate() {
+    for (_idx, field) in module.spec.fields.iter().enumerate() {
         if let Some(_) = data.get(&field.id) {
             columns.push(field.id.clone());
             // SQLx usa $1, $2, $3 para parámetros en Postgres

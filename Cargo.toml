@@ -22,3 +22,6 @@ uuid = { version = "1.0", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] } # Para fechas
 regex = "1.10" # Para validar los constraints de los campos
 dotenvy = "0.15.7"
+
+# Para hooks asíncronos
+async-trait = "0.1"
