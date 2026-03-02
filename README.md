@@ -1,5 +1,7 @@
 # Lex — Motor Declarativo Inspirado en *Minecraft*
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/BradMoyetones/lex)
+
 **(Manifiesto, Filosofía y Diseño de Alto Nivel — Versión Fundacional)**
 
 > **Propósito:** presentar, desde la filosofía hasta la ejecución práctica, un motor de software data-driven, agnóstico y eterno —un `engine` que describe entidades y comportamientos en vez de imponer implementaciones— inspirado en las decisiones de diseño que hicieron de *Minecraft* una plataforma duradera y extensible.
